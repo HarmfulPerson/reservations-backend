@@ -1,6 +1,4 @@
-const { Op } = require('sequelize');
 const bcrypt = require('bcrypt');
-const db = require('../config/db');
 const CustomError = require('../helpers/error');
 const { generateToken } = require('../services/auth');
 const User = require('../models/user');
@@ -8,15 +6,6 @@ const httpStatusCodes = require('../helpers/httpStatusCodes');
 const Reservation = require('../models/reservation');
 
 const saltRounds = 12;
-const keysToReturn = [
-  'uid',
-  'username',
-  'email',
-  'firstName',
-  'lastName',
-  'phone',
-  'lastLogin',
-];
 
 module.exports.register = async (user) => {
   const registeredUser = await User.findOne({
@@ -96,7 +85,7 @@ module.exports.update = async (userData, uid) => {
     where: {
       uid,
     },
-    returning: keysToReturn,
+    returning: true,
   });
 
   return patchedUser[1][0];

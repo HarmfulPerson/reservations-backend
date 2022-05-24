@@ -1,23 +1,9 @@
-const { Op } = require('sequelize');
-const bcrypt = require('bcrypt');
-const db = require('../config/db');
 const CustomError = require('../helpers/error');
-const { generateToken } = require('../services/auth');
 const ReservationToConfirm = require('../models/reservationToConfirm');
 const httpStatusCodes = require('../helpers/httpStatusCodes');
 const Reservation = require('../models/reservation');
 const reservationStatuses = require('../helpers/consts');
-
-const saltRounds = 12;
-const keysToReturn = [
-  'uid',
-  'username',
-  'email',
-  'firstName',
-  'lastName',
-  'phone',
-  'lastLogin',
-];
+const { sendInfoEmailForApplicationUser } = require('../helpers/mailer');
 
 module.exports.add = async (data) => {
   const reservation = await Reservation.findOne({
@@ -36,7 +22,7 @@ module.exports.add = async (data) => {
     status: reservationStatuses.toConfirm,
     reservedBy: data.reservedBy,
   });
-
+  delete data.uid;
   return reservation.createReservationToConfirm(data, { returning: true });
 };
 
@@ -53,12 +39,28 @@ module.exports.confirmDate = async (uid) => {
       'Reservation of given uid does not exist'
     );
 
+  let ownerEmail;
+  let startDate;
+  let endDate;
+
+  if (reservationToConfirm.status !== reservationStatuses.toConfirm)
+    throw new CustomError(
+      httpStatusCodes.BAD_REQUEST,
+      'This reservation is confirmed'
+    );
+
   await Reservation.update(
     { status: reservationStatuses.confirmed },
     {
       where: { uid: reservationToConfirm.reservationUid },
+      returning: true,
     }
-  );
+  ).then(async (object) => {
+    startDate = object[1][0].startDate;
+    endDate = object[1][0].endDate;
+    ownerEmail = (await object[1][0].getUser()).email;
+  });
 
+  sendInfoEmailForApplicationUser(ownerEmail, startDate, endDate);
   await reservationToConfirm.destroy();
 };

@@ -1,27 +1,19 @@
 const { Op } = require('sequelize');
-const bcrypt = require('bcrypt');
-const moment = require('moment');
-const db = require('../config/db');
 const CustomError = require('../helpers/error');
-const { generateToken } = require('../services/auth');
 const Reservation = require('../models/reservation');
 const httpStatusCodes = require('../helpers/httpStatusCodes');
 const User = require('../models/user');
 const reservationStatuses = require('../helpers/consts');
-const { sendEmailIfReservationNotFree } = require('../helpers/mailer');
+const {
+  sendEmailIfReservationNotFree,
+  sendEmailForDateConfirmation,
+} = require('../helpers/mailer');
 const ReservationToConfirm = require('../models/reservationToConfirm');
+const { isDateValid } = require('../services/reservation');
 
-const now = moment();
-const saltRounds = 12;
-const keysToReturn = [
-  'uid',
-  'username',
-  'email',
-  'firstName',
-  'lastName',
-  'phone',
-  'lastLogin',
-];
+const date = new Date();
+const offset = date.getTimezoneOffset() * 60000;
+const ISOStringNowDate = new Date(date.getTime() - offset).toISOString();
 
 module.exports.getOwnReservation = async (requester) => {
   const user = await User.findOne({
@@ -36,7 +28,13 @@ module.exports.getOwnReservation = async (requester) => {
       'Requester does not exist'
     );
 
-  return user.getReservations();
+  return user.getReservations({
+    where: {
+      startDate: {
+        [Op.gte]: ISOStringNowDate,
+      },
+    },
+  });
 };
 
 module.exports.deleteReservation = async (reservationUid, requester) => {
@@ -75,6 +73,9 @@ module.exports.deleteReservation = async (reservationUid, requester) => {
 };
 
 module.exports.add = async (data, requester) => {
+  if (!isDateValid(data.startDate, data.endDate))
+    throw new CustomError(httpStatusCodes.BAD_REQUEST, 'Invalid dates');
+
   const user = await User.findOne({
     where: {
       uid: requester,
@@ -86,7 +87,7 @@ module.exports.add = async (data, requester) => {
       httpStatusCodes.NOT_FOUND,
       'Requester does not exist'
     );
-  console.log(data.startDate);
+
   const colidingReservations = await Reservation.findOne({
     where: {
       [Op.or]: [
@@ -102,15 +103,58 @@ module.exports.add = async (data, requester) => {
             [Op.lt]: data.endDate,
           },
         },
+        {
+          startDate: data.startDate,
+        },
+        {
+          endDate: data.endDate,
+        },
       ],
     },
   });
 
-  if (colidingReservations?.length)
+  const sameReservation = await Reservation.findOne({
+    where: {
+      startDate: data.startDate,
+      endDate: data.endDate,
+    },
+  });
+
+  if (colidingReservations || sameReservation)
     throw new CustomError(
       httpStatusCodes.BAD_REQUEST,
       'These dates collides with existing ones'
     );
 
-  return user.createReservation(data, { returning: true });
+  const newReservation = await user.createReservation(data, {
+    returning: true,
+  });
+
+  if (newReservation)
+    sendEmailForDateConfirmation(data.reservedBy, newReservation.uid, {
+      startDate: data.startDate,
+      endDate: data.endDate,
+    });
+
+  return newReservation;
+};
+
+module.exports.getAvailableDates = async () => {
+  const nextDays = 14;
+  const dayInMiliseconds = 24 * 60 * 60 * 1000;
+  const ISOStringNowDateNext14Days = new Date(
+    new Date(Date.now() + nextDays * dayInMiliseconds) - offset
+  ).toISOString();
+
+  const availableDates = await Reservation.findAll({
+    where: {
+      startDate: {
+        [Op.gte]: ISOStringNowDate,
+        [Op.lte]: ISOStringNowDateNext14Days,
+      },
+      status: reservationStatuses.free,
+    },
+  });
+
+  return availableDates;
 };

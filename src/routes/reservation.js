@@ -3,6 +3,7 @@ const {
   add,
   getOwnReservation,
   deleteReservation,
+  getAvailableDates,
 } = require('../controllers/reservation');
 const { auth } = require('../services/auth');
 const httpStatusCodes = require('../helpers/httpStatusCodes');
@@ -14,6 +15,17 @@ router.get('/', auth, async (req, res, next) => {
     const ownReservations = await getOwnReservation(req.data.uid);
 
     res.status(httpStatusCodes.CREATED).json(ownReservations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/availableDates', async (req, res, next) => {
+  try {
+    // returns availableDates for the next 2 weeks
+    const availableDates = await getAvailableDates();
+
+    res.status(httpStatusCodes.CREATED).json(availableDates);
   } catch (error) {
     next(error);
   }
