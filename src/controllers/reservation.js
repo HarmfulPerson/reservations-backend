@@ -44,6 +44,7 @@ module.exports.deleteReservation = async (reservationUid, requester) => {
       userUid: requester,
     },
   });
+  console.log(reservation);
 
   if (!reservation)
     throw new CustomError(
@@ -130,11 +131,11 @@ module.exports.add = async (data, requester) => {
     returning: true,
   });
 
-  if (newReservation)
-    sendEmailForDateConfirmation(data.reservedBy, newReservation.uid, {
-      startDate: data.startDate,
-      endDate: data.endDate,
-    });
+  // if (newReservation)
+  //   sendEmailForDateConfirmation(data.reservedBy, newReservation.uid, {
+  //     startDate: data.startDate,
+  //     endDate: data.endDate,
+  //   });
 
   return newReservation;
 };

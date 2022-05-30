@@ -71,7 +71,7 @@ module.exports.sendInfoEmailForApplicationUser = (
   });
 };
 
-module.exports.sendEmailIfReservationNotFree = (email, uid, dateObject) => {
+module.exports.sendEmailIfReservationNotFree = (email, dateObject) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

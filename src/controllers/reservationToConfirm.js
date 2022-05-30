@@ -31,6 +31,9 @@ module.exports.confirmDate = async (uid) => {
     where: {
       uid,
     },
+    include: {
+      model: Reservation,
+    },
   });
 
   if (!reservationToConfirm)
@@ -38,19 +41,22 @@ module.exports.confirmDate = async (uid) => {
       httpStatusCodes.NOT_FOUND,
       'Reservation of given uid does not exist'
     );
-
+  console.log(reservationToConfirm.reservation.status);
   let ownerEmail;
   let startDate;
   let endDate;
 
-  if (reservationToConfirm.status !== reservationStatuses.toConfirm)
+  if (reservationToConfirm.reservation.status !== reservationStatuses.toConfirm)
     throw new CustomError(
       httpStatusCodes.BAD_REQUEST,
       'This reservation is confirmed'
     );
 
   await Reservation.update(
-    { status: reservationStatuses.confirmed },
+    {
+      status: reservationStatuses.confirmed,
+      reservedBy: reservationToConfirm.reservedBy,
+    },
     {
       where: { uid: reservationToConfirm.reservationUid },
       returning: true,
@@ -60,7 +66,9 @@ module.exports.confirmDate = async (uid) => {
     endDate = object[1][0].endDate;
     ownerEmail = (await object[1][0].getUser()).email;
   });
-
+  console.log('xddd', ownerEmail, startDate, endDate);
   sendInfoEmailForApplicationUser(ownerEmail, startDate, endDate);
   await reservationToConfirm.destroy();
+
+  return reservationToConfirm.reservation;
 };

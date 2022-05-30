@@ -15,9 +15,9 @@ router.post('/add', async (req, res, next) => {
 });
 router.patch('/confirm', async (req, res, next) => {
   try {
-    await confirmDate(req.body.uid);
+    const reservation = await confirmDate(req.body.uid);
 
-    res.status(httpStatusCodes.CREATED).json({ confirmed: true });
+    res.status(httpStatusCodes.OK).json(reservation);
   } catch (error) {
     next(error);
   }

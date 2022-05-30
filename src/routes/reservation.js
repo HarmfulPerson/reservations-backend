@@ -25,7 +25,7 @@ router.get('/availableDates', async (req, res, next) => {
     // returns availableDates for the next 2 weeks
     const availableDates = await getAvailableDates();
 
-    res.status(httpStatusCodes.CREATED).json(availableDates);
+    res.status(httpStatusCodes.OK).json(availableDates);
   } catch (error) {
     next(error);
   }
@@ -41,14 +41,14 @@ router.post('/add', auth, async (req, res, next) => {
   }
 });
 
-router.delete('/', auth, async (req, res, next) => {
+router.delete('/:uid', auth, async (req, res, next) => {
   try {
     const deletedReservation = await deleteReservation(
-      req.body.uid,
+      req.params.uid,
       req.data.uid
     );
 
-    res.status(httpStatusCodes.CREATED).json(deletedReservation);
+    res.status(httpStatusCodes.OK).json(deletedReservation);
   } catch (error) {
     next(error);
   }
