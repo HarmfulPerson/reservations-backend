@@ -27,6 +27,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/api', (req, res, next) => {
+  console.log(req.path);
+});
+
 app.use('/init', initRoutes);
 app.use('/user', userRoutes);
 app.use('/reservation', reservationRoutes);

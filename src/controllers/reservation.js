@@ -34,6 +34,7 @@ module.exports.getOwnReservation = async (requester) => {
         [Op.gte]: ISOStringNowDate,
       },
     },
+    order: [['startDate', 'ASC']],
   });
 };
 

@@ -67,12 +67,19 @@ module.exports.login = async (userLoginData) => {
       lastName: user.lastName,
       lastLogin: user.lastLogin,
       email: user.email,
+      phone: user.phone,
     },
   };
 };
 
 module.exports.update = async (userData, uid) => {
   const user = { ...userData };
+
+  if (userData.password && userData.password !== userData.rePassword)
+    throw new CustomError(
+      httpStatusCodes.BAD_REQUEST,
+      'Passwords does not match'
+    );
 
   if (userData.password && userData.password !== '') {
     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
@@ -85,7 +92,7 @@ module.exports.update = async (userData, uid) => {
     where: {
       uid,
     },
-    returning: true,
+    returning: ['email', 'firstName', 'lastLogin', 'lastName', 'phone', 'uid'],
   });
 
   return patchedUser[1][0];
