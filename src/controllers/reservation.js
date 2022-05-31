@@ -45,7 +45,6 @@ module.exports.deleteReservation = async (reservationUid, requester) => {
       userUid: requester,
     },
   });
-  console.log(reservation);
 
   if (!reservation)
     throw new CustomError(
@@ -58,16 +57,17 @@ module.exports.deleteReservation = async (reservationUid, requester) => {
       endDate: reservation.endDate,
     });
   } else if (reservation.status === reservationStatuses.toConfirm) {
-    const reservationToConfirm = ReservationToConfirm.findOne({
+    const reservationToConfirm = await ReservationToConfirm.findOne({
       where: { reservationUid },
     });
+    console.log(reservationToConfirm);
 
     if (reservationToConfirm) {
-      reservationToConfirm.destroy();
       sendEmailIfReservationNotFree(reservationToConfirm.reservedBy, {
         startDate: reservation.startDate,
         endDate: reservation.endDate,
       });
+      await reservationToConfirm.destroy();
     }
   }
 
@@ -112,6 +112,7 @@ module.exports.add = async (data, requester) => {
           endDate: data.endDate,
         },
       ],
+      userUid: requester,
     },
   });
 
@@ -119,6 +120,7 @@ module.exports.add = async (data, requester) => {
     where: {
       startDate: data.startDate,
       endDate: data.endDate,
+      userUid: requester,
     },
   });
 
@@ -155,6 +157,10 @@ module.exports.getAvailableDates = async () => {
         [Op.lte]: ISOStringNowDateNext14Days,
       },
       status: reservationStatuses.free,
+    },
+    include: {
+      model: User,
+      attributes: ['firstName', 'lastName', 'phone', 'email'],
     },
   });
 
