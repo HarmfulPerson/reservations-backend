@@ -4,20 +4,19 @@ const WorkerUser = require('./workerUser');
 
 const WorkerUserTime = db.define('workerUserTime', {
   startTime: {
-    type: Sequelize.DataTypes.NUMBER,
-    allowNull: false,
-    unique: true,
+    type: Sequelize.DataTypes.BIGINT,
+    allowNull: true,
   },
   endTime: {
-    type: Sequelize.DataTypes.NUMBER,
-    allowNull: false,
+    type: Sequelize.DataTypes.BIGINT,
+    allowNull: true,
   },
   workedTime: {
-    type: Sequelize.DataTypes.NUMBER,
+    type: Sequelize.DataTypes.BIGINT,
+    allowNull: true,
     set() {
-      // Storing passwords in plaintext in the database is terrible.
-      // Hashing the value with an appropriate cryptographic hash function is better.
-      this.setDataValue('workedTime', this.endTime - this.startTime);
+      if (this.endTime)
+        this.setDataValue('workedTime', this.endTime - this.startTime);
     },
   },
 });

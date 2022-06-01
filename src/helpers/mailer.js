@@ -13,15 +13,20 @@ const createEmailIfReservationNotFree = (startDate, endDate) =>
 const createEmailInfoForApplicationUser = (startDate, endDate) =>
   `<p>Został potwierdzony nowy termin ${startDate} - ${endDate}.</p>`;
 
-module.exports.sendEmailForDateConfirmation = (email, uid, dateObject) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+const transporter = nodemailer.createTransport({
+  port: 587,
+  secure: false,
+  host: process.env.EMAIL_HOST,
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
 
+module.exports.sendEmailForDateConfirmation = (email, uid, dateObject) => {
   const mailOptions = {
     from: process.env.EMAIL,
     to: email,
@@ -47,14 +52,6 @@ module.exports.sendInfoEmailForApplicationUser = (
   startDate,
   endDate
 ) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
   const mailOptions = {
     from: process.env.EMAIL,
     to: email,
@@ -72,14 +69,6 @@ module.exports.sendInfoEmailForApplicationUser = (
 };
 
 module.exports.sendEmailIfReservationNotFree = (email, dateObject) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
   const mailOptions = {
     from: process.env.EMAIL,
     to: email,
@@ -96,5 +85,23 @@ module.exports.sendEmailIfReservationNotFree = (email, dateObject) => {
     } else {
       console.log(`Email sent: ${info.response}`);
     }
+  });
+};
+
+module.exports.createEmailWithPassword = (email, password) => {
+  const mailData = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: 'Oto twoje hasło - squash',
+    text: 'Super!',
+    html: `<b>Witaj, oto twoje hasło którym zalogujesz się w serwisie! </b>
+				 <br> ${password}<br/>`,
+  };
+
+  transporter.sendMail(mailData, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    return true;
   });
 };

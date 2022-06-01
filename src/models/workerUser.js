@@ -18,18 +18,18 @@ const WorkerUser = db.define('workerUser', {
   },
   name: {
     type: Sequelize.DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
   },
   surname: {
     type: Sequelize.DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
   },
   role: {
     type: Sequelize.DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
   },
   stake: {
-    type: Sequelize.DataTypes.NUMBER,
+    type: Sequelize.DataTypes.INTEGER,
     defaultValue: 15,
   },
 });

@@ -5,7 +5,8 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const userRoutes = require('./src/routes/user');
 const reservationRoutes = require('./src/routes/reservation');
-const reservationToConfirm = require('./src/routes/reservationToConfirm');
+const reservationToConfirmRoutes = require('./src/routes/reservationToConfirm');
+const workersRoutes = require('./src/routes/workers');
 
 require('dotenv').config();
 const initRoutes = require('./src/routes/init');
@@ -34,7 +35,8 @@ app.use('/api', (req, res, next) => {
 app.use('/init', initRoutes);
 app.use('/user', userRoutes);
 app.use('/reservation', reservationRoutes);
-app.use('/reservationToConfirm', reservationToConfirm);
+app.use('/reservationToConfirm', reservationToConfirmRoutes);
+app.use('/workers', workersRoutes);
 
 app.use((req, res, next) => {
   const error = new Error('Not found');

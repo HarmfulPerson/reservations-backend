@@ -107,12 +107,7 @@ module.exports.removeUser = async (UidToDelete) => {
 
   if (!user)
     throw new CustomError(httpStatusCodes.BAD_REQUEST, 'Stop messing bro');
-  const res = await Reservation.findOne({
-    where: {
-      uid: 'b35d98c1-e937-45e5-be5e-d12d1812f8b4',
-    },
-  });
-  // eslint-disable-next-line no-proto
+
   user.destroy();
 
   return true;

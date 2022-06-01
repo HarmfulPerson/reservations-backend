@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
       message: 'synchronised',
     });
   } catch (error) {
+    console.log(error);
     return error;
   }
 });

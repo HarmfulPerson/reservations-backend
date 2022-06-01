@@ -1,5 +1,12 @@
 const express = require('express');
-const { register, login, update, removeUser } = require('../controllers/user');
+const {
+  register,
+  login,
+  update,
+  removeUser,
+  startWork,
+  endWork,
+} = require('../controllers/workers');
 const { auth } = require('../services/auth');
 const httpStatusCodes = require('../helpers/httpStatusCodes');
 
@@ -7,9 +14,41 @@ const router = express.Router();
 
 router.post('/register', auth, async (req, res, next) => {
   try {
-    const newUser = await register(req.body);
+    console.log(req.data);
+    const newUser = await register(req.body, req.data.uid);
 
     res.status(httpStatusCodes.CREATED).json(newUser);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/login', async (req, res, next) => {
+  try {
+    const loggedUser = await login(req.body);
+
+    res.status(httpStatusCodes.CREATED).json(loggedUser);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/startWork', auth, async (req, res, next) => {
+  try {
+    const startTime = await startWork(req.data.uid);
+
+    res.status(httpStatusCodes.CREATED).json({ startTime });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/endWork', auth, async (req, res, next) => {
+  try {
+    console.log(req.data.uid);
+    const endTime = await endWork(req.body, req.data.uid);
+
+    res.status(httpStatusCodes.CREATED).json({ endTime });
   } catch (error) {
     next(error);
   }
