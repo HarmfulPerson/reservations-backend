@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const userRoutes = require('./src/routes/user');
 const reservationRoutes = require('./src/routes/reservation');
 const reservationToConfirmRoutes = require('./src/routes/reservationToConfirm');
@@ -11,6 +12,7 @@ const workersRoutes = require('./src/routes/workers');
 require('dotenv').config();
 const initRoutes = require('./src/routes/init');
 
+app.use(cors());
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

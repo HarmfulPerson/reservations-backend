@@ -39,6 +39,8 @@ module.exports.register = async (user, requesterUid) => {
     numbers: true,
   });
 
+  console.log(password);
+
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   if (hashedPassword) {
@@ -46,6 +48,8 @@ module.exports.register = async (user, requesterUid) => {
       ...user,
       password: hashedPassword,
     };
+
+    console.log(newUser);
     const createdUser = await WorkerUser.create(newUser);
 
     createEmailWithPassword(user.email, password);
@@ -62,10 +66,11 @@ module.exports.register = async (user, requesterUid) => {
 module.exports.login = async (userLoginData) => {
   const user = await WorkerUser.findOne({
     where: {
-      login: userLoginData.login,
+      login: userLoginData.username,
     },
   });
 
+  console.log(user);
   if (!user)
     throw new CustomError(httpStatusCodes.UNAUTHORIZED, 'Invalid credentials');
 
@@ -140,13 +145,49 @@ module.exports.endWork = async (data, requesterUid) => {
     throw new CustomError(httpStatusCodes.BAD_REQUEST, 'Only user can do it.');
 
   const endTime = new Date().getTime();
-  console.log(endTime - data.startTime);
+  const workedTime = endTime - data.startTime;
   await WorkerUserTime.update(
-    { endTime, workedTime: endTime - data.startTime },
+    { endTime, workedTime },
     {
       where: {
         startTime: data.startTime,
         workerUserUid: requesterUid,
+      },
+    }
+  );
+
+  return true;
+};
+
+module.exports.editUser = async (data) => {
+  await WorkerUser.update(
+    {
+      name: data.name,
+      surname: data.surname,
+      stake: data.stake,
+    },
+    {
+      where: {
+        uid: data.uid,
+      },
+    }
+  );
+};
+
+// module.exports.getWorkerTime = async (data) => {
+
+// }
+
+module.exports.updateUserTime = async (data) => {
+  await WorkerUserTime.update(
+    {
+      startTime: data.startTime,
+      endTime: data.endTime,
+      workedTime: data.endTime - data.startTime,
+    },
+    {
+      where: {
+        uid: data.uid,
       },
     }
   );
@@ -170,52 +211,77 @@ module.exports.startWork = async (requesterUid) => {
 
 module.exports.getAllUsersInfo = async () => {
   const users = await WorkerUser.findAll({
+    group: ['workerUser.uid'],
+    attributes: [
+      'uid',
+      'login',
+      'name',
+      'surname',
+      'role',
+      'stake',
+      [db.fn('sum', db.col('workerUserTimes.workedTime')), 'workedTime'],
+    ],
     include: {
       model: WorkerUserTime,
-      attributes: [[db.fn('sum', db.col('workedTime')), 'workedTime']],
+      attributes: [],
     },
+    raw: true,
   });
-
+  console.log(users);
   return users;
 };
 
-module.exports.update = async (userData, uid) => {
-  const user = { ...userData };
+// module.exports.update = async (userData, uid) => {
+//   const user = { ...userData };
 
-  if (userData.password && userData.password !== userData.rePassword)
-    throw new CustomError(
-      httpStatusCodes.BAD_REQUEST,
-      'Passwords does not match'
-    );
+//   if (userData.password && userData.password !== userData.rePassword)
+//     throw new CustomError(
+//       httpStatusCodes.BAD_REQUEST,
+//       'Passwords does not match'
+//     );
 
-  if (userData.password && userData.password !== '') {
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-    user.password = hashedPassword;
-  } else {
-    delete user.password;
-  }
+//   if (userData.password && userData.password !== '') {
+//     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+//     user.password = hashedPassword;
+//   } else {
+//     delete user.password;
+//   }
 
-  const patchedUser = await User.update(user, {
+//   const patchedUser = await User.update(user, {
+//     where: {
+//       uid,
+//     },
+//     returning: ['email', 'firstName', 'lastLogin', 'lastName', 'phone', 'uid'],
+//   });
+
+//   return patchedUser[1][0];
+// };
+
+module.exports.getUserInfo = async (login) => {
+  const user = await WorkerUser.findOne({ where: { login } });
+  const workerUser = await WorkerUserTime.findAll({
     where: {
-      uid,
+      workerUserUid: user.uid,
     },
-    returning: ['email', 'firstName', 'lastLogin', 'lastName', 'phone', 'uid'],
   });
 
-  return patchedUser[1][0];
-};
-
-module.exports.removeUser = async (UidToDelete) => {
-  const user = await User.findOne({
-    where: {
-      uid: UidToDelete,
-    },
-  });
-
-  if (!user)
+  if (!workerUser)
     throw new CustomError(httpStatusCodes.BAD_REQUEST, 'Stop messing bro');
 
-  user.destroy();
+  return workerUser;
+};
+
+module.exports.removeUser = async (login) => {
+  const workerUser = await WorkerUser.findOne({
+    where: {
+      login,
+    },
+  });
+
+  if (!workerUser)
+    throw new CustomError(httpStatusCodes.BAD_REQUEST, 'Stop messing bro');
+
+  workerUser.destroy();
 
   return true;
 };

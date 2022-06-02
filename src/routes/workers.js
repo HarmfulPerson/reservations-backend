@@ -6,6 +6,10 @@ const {
   removeUser,
   startWork,
   endWork,
+  getAllUsersInfo,
+  getUserInfo,
+  updateUserTime,
+  editUser,
 } = require('../controllers/workers');
 const { auth } = require('../services/auth');
 const httpStatusCodes = require('../helpers/httpStatusCodes');
@@ -45,7 +49,6 @@ router.post('/startWork', auth, async (req, res, next) => {
 
 router.post('/endWork', auth, async (req, res, next) => {
   try {
-    console.log(req.data.uid);
     const endTime = await endWork(req.body, req.data.uid);
 
     res.status(httpStatusCodes.CREATED).json({ endTime });
@@ -54,9 +57,39 @@ router.post('/endWork', auth, async (req, res, next) => {
   }
 });
 
+router.patch('/edit-user', auth, async (req, res, next) => {
+  try {
+    await editUser(req.body, req.data.uid);
+
+    res.status(httpStatusCodes.CREATED).json({ result: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put('/updateUserWorkingTime', auth, async (req, res, next) => {
+  try {
+    const result = await updateUserTime(req.body, req.data.uid);
+
+    res.status(httpStatusCodes.CREATED).json({ result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// router.get('/worker-time', auth, async (req, res, next) => {
+//   try {
+//     const result = await getWorkerTime(req.body);
+
+//     res.status(httpStatusCodes.CREATED).json({ result });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
 router.get('/users', async (req, res, next) => {
   try {
-    const result = await getAllUsersInfo(req.body);
+    const result = await getAllUsersInfo();
 
     res.status(httpStatusCodes.OK).json(result);
   } catch (error) {
@@ -74,11 +107,22 @@ router.patch('/', auth, async (req, res, next) => {
   }
 });
 
-router.delete('/', auth, async (req, res, next) => {
+router.post('/deleteUser', auth, async (req, res, next) => {
   try {
-    const removedUser = await removeUser(req.data.uid);
+    console.log('bam');
+    const removedUser = await removeUser(req.body.login);
 
     res.status(httpStatusCodes.OK).json(removedUser);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/boyTime:login', auth, async (req, res, next) => {
+  try {
+    const userInfo = await getUserInfo(req.params.login);
+
+    res.status(httpStatusCodes.OK).json(userInfo);
   } catch (error) {
     next(error);
   }

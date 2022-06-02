@@ -3,6 +3,11 @@ const db = require('../config/db');
 const WorkerUser = require('./workerUser');
 
 const WorkerUserTime = db.define('workerUserTime', {
+  uid: {
+    type: Sequelize.DataTypes.UUID,
+    defaultValue: Sequelize.UUIDV4,
+    primaryKey: true,
+  },
   startTime: {
     type: Sequelize.DataTypes.BIGINT,
     allowNull: true,
@@ -14,10 +19,6 @@ const WorkerUserTime = db.define('workerUserTime', {
   workedTime: {
     type: Sequelize.DataTypes.BIGINT,
     allowNull: true,
-    set() {
-      if (this.endTime)
-        this.setDataValue('workedTime', this.endTime - this.startTime);
-    },
   },
 });
 
